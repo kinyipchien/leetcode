@@ -36,7 +36,7 @@ salary = pd.DataFrame(table['rows']['salary'],
 
 # class TestSolution(unittest.TestCase):
 
-#     BUG: pandasql doesn't support DELETE or UPDATE clauses.
+#     # BUG: pandasql doesn't support DELETE or UPDATE clauses.
 #     def test_swap_salary(self):
 #         with open('src/problems/0627-swap-salary.sql') as f:
 #             q = f.read()
