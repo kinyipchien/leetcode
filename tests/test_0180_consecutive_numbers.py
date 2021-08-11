@@ -62,7 +62,6 @@ class TestSolution(unittest.TestCase):
                                    [7, 1]]}}
                  ''')
         ]
-            
         self.expected = [
             json.loads('''
                 {"headers": ["ConsecutiveNums"], "values": [[1]]}
