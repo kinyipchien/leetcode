@@ -21,31 +21,33 @@ import unittest
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from pandasql import sqldf
-pysqldf = lambda q: sqldf(q, globals())
-
-table = json.loads('''
-    {"headers": {"Employee": ["Id", "Name", "Salary", "ManagerId"]},
-     "rows": {"Employee": [[1, "Joe", 70000, 3],
-                           [2, "Henry", 80000, 4],
-                           [3, "Sam", 60000, null],
-                           [4, "Max", 90000, null]]}}
-    ''')
-employee = pd.DataFrame(table['rows']['Employee'],
-                      columns=table['headers']['Employee'])
 
 
 class TestSolution(unittest.TestCase):
 
+    def setUp(self):
+        self.input = json.loads('''
+            {"headers":
+                {"Employee": ["Id", "Name", "Salary", "ManagerId"]},
+             "rows": {"Employee": [[1, "Joe", 70000, 3],
+                                   [2, "Henry", 80000, 4],
+                                   [3, "Sam", 60000, null],
+                                   [4, "Max", 90000, null]]}}
+            ''')
+        self.expected = json.loads('''
+            {"headers": ["Employee"], "values": [["Joe"]]}
+            ''')
+
     def test_employees_earning_more_than_their_managers(self):
+        employee = pd.DataFrame(
+            self.input['rows']['Employee'],
+            columns=self.input['headers']['Employee'])
+        expected_df = pd.DataFrame(self.expected['values'],
+                                   columns=self.expected['headers'])
         with open(
             'src/problems/0181-employees-earning-more-than-their-managers.sql'
         ) as f:
             q = f.read()
 
-        result = json.loads('''
-        {"headers": ["Employee"], "values": [["Joe"]]}
-        ''')
-
-        result_df = pd.DataFrame(result['values'],
-                                 columns=result['headers'])
-        assert_frame_equal(pysqldf(q), result_df)
+        pysqldf = lambda q: sqldf(q, {'employee': employee})
+        assert_frame_equal(pysqldf(q), expected_df)

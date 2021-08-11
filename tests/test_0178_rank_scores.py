@@ -21,30 +21,21 @@ import unittest
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from pandasql import sqldf
-pysqldf = lambda q: sqldf(q, globals())
-
-table = json.loads('''
-    {"headers": {"Scores": ["Id", "Score"]},
-     "rows": {"Scores": [[1, 3.50],
-                         [2, 3.65],
-                         [3, 4.00],
-                         [4, 3.85],
-                         [5, 4.00],
-                         [6, 3.65]]}}
-    ''')
-scores = pd.DataFrame(table['rows']['Scores'],
-                      columns=table['headers']['Scores'])
 
 
 class TestSolution(unittest.TestCase):
 
-    def test_exchange_seats(self):
-        with open(
-            'src/problems/0178-rank-scores.sql'
-        ) as f:
-            q = f.read()
-
-        result = json.loads('''
+    def setUp(self):
+        self.input = json.loads('''
+            {"headers": {"Scores": ["Id", "Score"]},
+             "rows": {"Scores": [[1, 3.50],
+                                 [2, 3.65],
+                                 [3, 4.00],
+                                 [4, 3.85],
+                                 [5, 4.00],
+                                 [6, 3.65]]}}
+            ''')
+        self.expected = json.loads('''
             {"headers": ["Score", "Rank"],
              "values": [[4.00, 1],
                         [4.00, 1],
@@ -54,6 +45,17 @@ class TestSolution(unittest.TestCase):
                         [3.50, 4]]}
             ''')
 
-        result_df = pd.DataFrame(result['values'],
-                                 columns=result['headers'])
-        assert_frame_equal(pysqldf(q), result_df)
+    def test_exchange_seats(self):
+        scores = pd.DataFrame(
+            self.input['rows']['Scores'],
+            columns=self.input['headers']['Scores'])
+        expected_df = pd.DataFrame(self.expected['values'],
+                                   columns=self.expected['headers'])
+
+        with open(
+            'src/problems/0178-rank-scores.sql'
+        ) as f:
+            q = f.read()
+
+        pysqldf = lambda q: sqldf(q, {'scores': scores})
+        assert_frame_equal(pysqldf(q), expected_df)

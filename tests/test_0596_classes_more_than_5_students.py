@@ -21,36 +21,59 @@ import unittest
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from pandasql import sqldf
-pysqldf = lambda q: sqldf(q, globals())
-
-table = json.loads('''
-    {"headers": {"courses": ["student", "class"]},
-     "rows": {"courses": [["A", "Math"],
-                          ["B", "English"],
-                          ["C", "Math"],
-                          ["D", "Biology"],
-                          ["E", "Math"],
-                          ["F", "Computer"],
-                          ["G", "Math"],
-                          ["H", "Math"],
-                          ["I", "Math"]]}}
-    ''')
-courses = pd.DataFrame(table['rows']['courses'],
-                       columns=table['headers']['courses'])
 
 
 class TestSolution(unittest.TestCase):
 
-    def test_classes_more_than_5_students(self):
+    def setUp(self):
+        self.input = [
+            json.loads('''
+                {"headers": {"courses": ["student", "class"]},
+                 "rows": {"courses": [["A", "Math"],
+                                      ["B", "English"],
+                                      ["C", "Math"],
+                                      ["D", "Biology"],
+                                      ["E", "Math"],
+                                      ["F", "Computer"],
+                                      ["G", "Math"],
+                                      ["H", "Math"],
+                                      ["I", "Math"]]}}
+                '''),
+            json.loads('''
+                {"headers": {"courses": ["student", "class"]},
+                 "rows": {"courses": [["A", "Math"],
+                                      ["B", "English"],
+                                      ["C", "Math"],
+                                      ["D", "Biology"],
+                                      ["E", "Math"],
+                                      ["F", "Math"],
+                                      ["A", "Math"]]}}
+                ''')
+        ]
+        self.expected = [
+            json.loads('''
+                {"headers": ["class"], "values": [["Math"]]}
+                '''),
+            json.loads('''
+                {"headers":["class"],"values":[]}
+                ''')
+        ]
+
+    def case(self, i):
+        courses = pd.DataFrame(
+            self.input[i]['rows']['courses'],
+            columns=self.input[i]['headers']['courses'])
+        expected_df = pd.DataFrame(self.expected[i]['values'],
+                                   columns=self.expected[i]['headers'])
+
         with open(
             'src/problems/0596-classes-more-than-5-students.sql'
         ) as f:
             q = f.read()
 
-        result = json.loads('''
-        {"headers": ["class"], "values": [["Math"]]}
-        ''')
+        pysqldf = lambda q: sqldf(q, {'courses': courses})
+        assert_frame_equal(pysqldf(q), expected_df)
 
-        result_df = pd.DataFrame(result['values'],
-                                 columns=result['headers'])
-        assert_frame_equal(pysqldf(q), result_df)
+    def test_classes_more_than_5_students(self):
+        for i, _ in enumerate(self.input):
+            self.case(i)

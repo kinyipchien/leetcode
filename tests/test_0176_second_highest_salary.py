@@ -21,28 +21,30 @@ import unittest
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from pandasql import sqldf
-pysqldf = lambda q: sqldf(q, globals())
-
-table = json.loads('''
-    {"headers": {"Employee": ["Id", "Salary"]},
-     "rows": {"Employee": [[1, 100], [2, 200], [3, 300]]}}
-     ''')
-employee = pd.DataFrame(table['rows']['Employee'],
-                       columns=table['headers']['Employee'])
 
 
 class TestSolution(unittest.TestCase):
 
+    def setUp(self):
+        self.input = json.loads('''
+            {"headers": {"Employee": ["Id", "Salary"]},
+             "rows": {"Employee": [[1, 100], [2, 200], [3, 300]]}}
+            ''')
+        self.expected = json.loads('''
+            {"headers": ["SecondHighestSalary"], "values": [[200]]}
+            ''')
+
     def test_second_highest_salary(self):
+        employee = pd.DataFrame(
+            self.input['rows']['Employee'],
+            columns=self.input['headers']['Employee'])
+        expected_df = pd.DataFrame(self.expected['values'],
+                                   columns=self.expected['headers'])
+
         with open(
             'src/problems/0176-second-highest-salary.sql'
         ) as f:
             q = f.read()
 
-        result = json.loads('''
-        {"headers": ["SecondHighestSalary"], "values": [[200]]}
-        ''')
-
-        result_df = pd.DataFrame(result['values'],
-                                 columns=result['headers'])
-        assert_frame_equal(pysqldf(q), result_df)
+        pysqldf = lambda q: sqldf(q, {'employee': employee})
+        assert_frame_equal(pysqldf(q), expected_df)

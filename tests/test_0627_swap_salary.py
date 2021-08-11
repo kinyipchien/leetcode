@@ -15,40 +15,44 @@
 """
 627. Swap Salary
 """
-import json
-import unittest
+# BUG: pandasql doesn't support DELETE or UPDATE clauses.
+# import json
+# import unittest
 
-import pandas as pd
-from pandas.testing import assert_frame_equal
-from pandasql import sqldf
-pysqldf = lambda q: sqldf(q, globals())
-
-table = json.loads('''
-    {"headers": {"salary": ["id", "name", "sex", "salary"]},
-     "rows": {"salary": [[1, "A", "m", 2500],
-                         [2, "B" ,"f" ,1500],
-                         [3, "C" ,"m" ,5500],
-                         [4, "D" ,"f" ,500]]}}
-    ''')
-salary = pd.DataFrame(table['rows']['salary'],
-                      columns=table['headers']['salary'])
+# import pandas as pd
+# from pandas.testing import assert_frame_equal
+# from pandasql import sqldf
 
 
 # class TestSolution(unittest.TestCase):
 
-#     # BUG: pandasql doesn't support DELETE or UPDATE clauses.
+#     def setUp(self):
+#         self.input = json.loads('''
+#             {"headers": {"salary": ["id", "name", "sex", "salary"]},
+#              "rows": {"salary": [[1, "A", "m", 2500],
+#                                  [2, "B" ,"f" ,1500],
+#                                  [3, "C" ,"m" ,5500],
+#                                  [4, "D" ,"f" ,500]]}}
+#             ''')
+#         self.expected = json.loads('''
+#             {"headers": ["id", "name", "sex", "salary"],
+#              "values": [[1, "A", "f", 2500],
+#                         [2, "B", "m", 1500],
+#                         [3, "C", "f", 5500],
+#                         [4, "D", "m", 500]]}
+#             ''')
+
 #     def test_swap_salary(self):
-#         with open('src/problems/0627-swap-salary.sql') as f:
+#         salary = pd.DataFrame(
+#             self.input['rows']['salary'],
+#             columns=self.input['headers']['salary'])
+#         expected_df = pd.DataFrame(self.expected['values'],
+#                                    columns=self.expected['headers'])
+
+#         with open(
+#             'src/problems/0627-swap-salary.sql'
+#         ) as f:
 #             q = f.read()
 
-#         result = json.loads('''
-#         {"headers": ["id", "name", "sex", "salary"],
-#          "values": [[1, "A", "f", 2500],
-#                     [2, "B", "m", 1500],
-#                     [3, "C", "f", 5500],
-#                     [4, "D", "m", 500]]}
-#         ''')
-
-#         result_df = pd.DataFrame(result['values'],
-#                                  columns=result['headers'])
-#         assert_frame_equal(pysqldf(q), result_df)
+#         pysqldf = lambda q: sqldf(q, {'salary': salary})
+#         assert_frame_equal(pysqldf(q), expected_df)

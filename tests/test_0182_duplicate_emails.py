@@ -21,28 +21,33 @@ import unittest
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from pandasql import sqldf
-pysqldf = lambda q: sqldf(q, globals())
-
-table = json.loads('''
-    {"headers":
-        {"Person": ["Id", "Email"]},
-     "rows":
-        {"Person": [[1, "a@b.com"], [2, "c@d.com"], [3, "a@b.com"]]}}
-    ''')
-person = pd.DataFrame(table['rows']['Person'],
-                      columns=table['headers']['Person'])
 
 
 class TestSolution(unittest.TestCase):
 
+    def setUp(self):
+        self.input = json.loads('''
+            {"headers":
+                {"Person": ["Id", "Email"]},
+             "rows":
+                {"Person":
+                    [[1, "a@b.com"], [2, "c@d.com"], [3, "a@b.com"]]}}
+            ''')
+        self.expected = json.loads('''
+            {"headers": ["Email"], "values": [["a@b.com"]]}
+            ''')
+
     def test_duplicate_emails(self):
-        with open('src/problems/0182-duplicate-emails.sql') as f:
+        person = pd.DataFrame(
+            self.input['rows']['Person'],
+            columns=self.input['headers']['Person'])
+        expected_df = pd.DataFrame(self.expected['values'],
+                                   columns=self.expected['headers'])
+
+        with open(
+            'src/problems/0182-duplicate-emails.sql'
+        ) as f:
             q = f.read()
 
-        result = json.loads('''
-        {"headers": ["Email"], "values": [["a@b.com"]]}
-        ''')
-
-        result_df = pd.DataFrame(result['values'],
-                                 columns=result['headers'])
-        assert_frame_equal(pysqldf(q), result_df)
+        pysqldf = lambda q: sqldf(q, {'person': person})
+        assert_frame_equal(pysqldf(q), expected_df)

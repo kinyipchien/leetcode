@@ -21,33 +21,40 @@ import unittest
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from pandasql import sqldf
-pysqldf = lambda q: sqldf(q, globals())
-
-table = json.loads('''
-    {"headers":
-        {"Person": ["PersonId", "LastName", "FirstName"],
-         "Address": ["AddressId", "PersonId", "City", "State"]},
-     "rows":
-         {"Person": [[1, "Wang", "Allen"]],
-          "Address": [[1, 2, "New York City", "New York"]]}}
-    ''')
-address = pd.DataFrame(table['rows']['Address'],
-                      columns=table['headers']['Address'])
-person = pd.DataFrame(table['rows']['Person'],
-                      columns=table['headers']['Person'])
 
 
 class TestSolution(unittest.TestCase):
 
+    def setUp(self):
+        self.input = json.loads('''
+            {"headers":
+                {"Person": ["PersonId", "LastName", "FirstName"],
+                 "Address":
+                     ["AddressId", "PersonId", "City", "State"]},
+             "rows":
+                 {"Person": [[1, "Wang", "Allen"]],
+                  "Address": [[1, 2, "New York City", "New York"]]}}
+            ''')
+        self.expected = json.loads('''
+            {"headers": ["FirstName", "LastName", "City", "State"],
+             "values": [["Allen", "Wang", null, null]]}
+            ''')
+
     def test_combine_two_tables(self):
-        with open('src/problems/0175-combine-two-tables.sql') as f:
+        address = pd.DataFrame(
+            self.input['rows']['Address'],
+            columns=self.input['headers']['Address'])
+        person = pd.DataFrame(
+            self.input['rows']['Person'],
+            columns=self.input['headers']['Person'])
+        expected_df = pd.DataFrame(self.expected['values'],
+                                   columns=self.expected['headers'])
+
+        with open(
+            'src/problems/0175-combine-two-tables.sql'
+        ) as f:
             q = f.read()
 
-        result = json.loads('''
-        {"headers": ["FirstName", "LastName", "City", "State"],
-         "values": [["Allen", "Wang", null, null]]}
-        ''')
-
-        result_df = pd.DataFrame(result['values'],
-                                 columns=result['headers'])
-        assert_frame_equal(pysqldf(q), result_df)
+        pysqldf = lambda q: sqldf(
+            q, {'address': address, 'person': person})
+        assert_frame_equal(pysqldf(q), expected_df)

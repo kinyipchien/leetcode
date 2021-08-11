@@ -21,32 +21,36 @@ import unittest
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from pandasql import sqldf
-pysqldf = lambda q: sqldf(q, globals())
-
-table = json.loads('''
-    {"headers": {"cinema": ["id", "movie", "description", "rating"]},
-     "rows": {"cinema": [[1, "War", "great 3D", 8.9],
-                         [2, "Science", "fiction", 8.5],
-                         [3, "irish", "boring", 6.2],
-                         [4, "Ice song", "Fantacy", 8.6],
-                         [5, "House card", "Interesting", 9.1]]}}
-    ''')
-cinema = pd.DataFrame(table['rows']['cinema'],
-                      columns=table['headers']['cinema'])
 
 
 class TestSolution(unittest.TestCase):
 
+    def setUp(self):
+        self.input = json.loads('''
+            {"headers": {"cinema": ["id", "movie", "description", "rating"]},
+             "rows": {"cinema": [[1, "War", "great 3D", 8.9],
+                                 [2, "Science", "fiction", 8.5],
+                                 [3, "irish", "boring", 6.2],
+                                 [4, "Ice song", "Fantacy", 8.6],
+                                 [5, "House card", "Interesting", 9.1]]}}
+            ''')
+        self.expected = json.loads('''
+            {"headers": ["id", "movie", "description", "rating"],
+             "values": [[5, "House card", "Interesting", 9.1],
+                        [1, "War", "great 3D", 8.9]]}
+            ''')
+
     def test_not_boring_movies(self):
-        with open('src/problems/0620-not-boring-movies.sql') as f:
+        cinema = pd.DataFrame(
+            self.input['rows']['cinema'],
+            columns=self.input['headers']['cinema'])
+        expected_df = pd.DataFrame(self.expected['values'],
+                                   columns=self.expected['headers'])
+
+        with open(
+            'src/problems/0620-not-boring-movies.sql'
+        ) as f:
             q = f.read()
 
-        result = json.loads('''
-        {"headers": ["id", "movie", "description", "rating"],
-         "values": [[5, "House card", "Interesting", 9.1],
-                    [1, "War", "great 3D", 8.9]]}
-        ''')
-
-        result_df = pd.DataFrame(result['values'],
-                                 columns=result['headers'])
-        assert_frame_equal(pysqldf(q), result_df)
+        pysqldf = lambda q: sqldf(q, {'cinema': cinema})
+        assert_frame_equal(pysqldf(q), expected_df)

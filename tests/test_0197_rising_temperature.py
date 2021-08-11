@@ -21,31 +21,34 @@ import unittest
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from pandasql import sqldf
-pysqldf = lambda q: sqldf(q, globals())
-
-table = json.loads('''
-    {"headers": {"Weather": ["Id", "RecordDate", "Temperature"]},
-     "rows": {"Weather": [[1, "2015-01-01", 10],
-                          [2, "2015-01-02", 25],
-                          [3, "2015-01-03", 20],
-                          [4, "2015-01-04", 30]]}}
-    ''')
-weather = pd.DataFrame(table['rows']['Weather'],
-                       columns=table['headers']['Weather'])
 
 
 class TestSolution(unittest.TestCase):
 
+    def setUp(self):
+        self.input = json.loads('''
+            {"headers":
+                {"Weather": ["Id", "RecordDate", "Temperature"]},
+             "rows": {"Weather": [[1, "2015-01-01", 10],
+                                  [2, "2015-01-02", 25],
+                                  [3, "2015-01-03", 20],
+                                  [4, "2015-01-04", 30]]}}
+            ''')
+        self.expected = json.loads('''
+            {"headers": ["Id"], "values": [[2], [4]]}
+            ''')
+
     def test_rising_temperature(self):
+        weather = pd.DataFrame(
+            self.input['rows']['Weather'],
+            columns=self.input['headers']['Weather'])
+        expected_df = pd.DataFrame(self.expected['values'],
+                                   columns=self.expected['headers'])
+
         with open(
             'src/problems/0197-rising-temperature.sql'
         ) as f:
             q = f.read()
 
-        result = json.loads('''
-        {"headers": ["Id"], "values": [[2], [4]]}
-        ''')
-
-        result_df = pd.DataFrame(result['values'],
-                                 columns=result['headers'])
-        assert_frame_equal(pysqldf(q), result_df)
+        pysqldf = lambda q: sqldf(q, {'weather': weather})
+        assert_frame_equal(pysqldf(q), expected_df)

@@ -21,36 +21,40 @@ import unittest
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from pandasql import sqldf
-pysqldf = lambda q: sqldf(q, globals())
-
-table = json.loads('''
-    {"headers": {"Customers": ["Id", "Name"],
-                 "Orders": ["Id", "CustomerId"]},
-     "rows": {"Customers": [[1, "Joe"],
-                            [2, "Henry"],
-                            [3, "Sam"],
-                            [4, "Max"]],
-              "Orders": [[1, 3],
-                         [2, 1]]}}
-    ''')
-customers = pd.DataFrame(table['rows']['Customers'],
-                      columns=table['headers']['Customers'])
-orders = pd.DataFrame(table['rows']['Orders'],
-                      columns=table['headers']['Orders'])
 
 
 class TestSolution(unittest.TestCase):
 
+    def setUp(self):
+        self.input = json.loads('''
+            {"headers": {"Customers": ["Id", "Name"],
+                         "Orders": ["Id", "CustomerId"]},
+             "rows": {"Customers": [[1, "Joe"],
+                                    [2, "Henry"],
+                                    [3, "Sam"],
+                                    [4, "Max"]],
+                      "Orders": [[1, 3],
+                                 [2, 1]]}}
+            ''')
+        self.expected = json.loads('''
+            {"headers": ["Customers"], "values": [["Henry"], ["Max"]]}
+            ''')
+
     def test_customers_who_never_order(self):
+        customers = pd.DataFrame(
+            self.input['rows']['Customers'],
+            columns=self.input['headers']['Customers'])
+        orders = pd.DataFrame(
+            self.input['rows']['Orders'],
+            columns=self.input['headers']['Orders'])
+        expected_df = pd.DataFrame(self.expected['values'],
+                                   columns=self.expected['headers'])
+
         with open(
             'src/problems/0183-customers-who-never-order.sql'
         ) as f:
             q = f.read()
 
-        result = json.loads('''
-        {"headers": ["Customers"], "values": [["Henry"], ["Max"]]}
-        ''')
-
-        result_df = pd.DataFrame(result['values'],
-                                 columns=result['headers'])
-        assert_frame_equal(pysqldf(q), result_df)
+        pysqldf = lambda q: sqldf(
+            q, {'customers':customers, 'orders': orders})
+        assert_frame_equal(pysqldf(q), expected_df)

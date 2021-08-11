@@ -21,36 +21,38 @@ import unittest
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from pandasql import sqldf
-pysqldf = lambda q: sqldf(q, globals())
-
-table = json.loads('''
-    {"headers":
-        {"World":
-            ["name", "continent", "area", "population", "gdp"]},
-     "rows":
-        {"World":
-            [["Afghanistan", "Asia", 652230, 25500100, 20343000000],
-             ["Albania", "Europe", 28748, 2831741, 12960000000],
-             ["Algeria", "Africa", 2381741, 37100000, 188681000000],
-             ["Andorra", "Europe", 468, 78115, 3712000000],
-             ["Angola", "Africa", 1246700, 20609294, 100990000000]]}}
-    ''')
-world = pd.DataFrame(table['rows']['World'],
-                     columns=table['headers']['World'])
 
 
 class TestSolution(unittest.TestCase):
 
+    def setUp(self):
+        self.input = json.loads('''
+            {"headers":
+                {"World":
+                    ["name", "continent", "area", "population", "gdp"]},
+             "rows":
+                {"World":
+                    [["Afghanistan", "Asia", 652230, 25500100, 20343000000],
+                     ["Albania", "Europe", 28748, 2831741, 12960000000],
+                     ["Algeria", "Africa", 2381741, 37100000, 188681000000],
+                     ["Andorra", "Europe", 468, 78115, 3712000000],
+                     ["Angola", "Africa", 1246700, 20609294, 100990000000]]}}
+            ''')
+        self.expected = json.loads('''
+            {"headers": ["name", "population", "area"],
+             "values": [["Afghanistan", 25500100, 652230],
+                        ["Algeria", 37100000, 2381741]]}
+            ''')
+
     def test_big_countries(self):
+        world = pd.DataFrame(
+            self.input['rows']['World'],
+            columns=self.input['headers']['World'])
+        expected_df = pd.DataFrame(self.expected['values'],
+                                   columns=self.expected['headers'])
+
         with open('src/problems/0595-big-countries.sql') as f:
             q = f.read()
 
-        result = json.loads('''
-        {"headers": ["name", "population", "area"],
-         "values": [["Afghanistan", 25500100, 652230],
-                    ["Algeria", 37100000, 2381741]]}
-        ''')
-
-        result_df = pd.DataFrame(result['values'],
-                                 columns=result['headers'])
-        assert_frame_equal(pysqldf(q), result_df)
+        pysqldf = lambda q: sqldf(q, {'world': world})
+        assert_frame_equal(pysqldf(q), expected_df)

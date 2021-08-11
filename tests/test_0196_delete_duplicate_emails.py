@@ -15,38 +15,40 @@
 """
 196. Delete Duplicate Emails
 """
-import json
-import unittest
+# BUG: pandasql doesn't support DELETE or UPDATE clauses.
+# import json
+# import unittest
 
-import pandas as pd
-from pandas.testing import assert_frame_equal
-from pandasql import sqldf
-pysqldf = lambda q: sqldf(q, globals())
-
-table = json.loads('''
-    {"headers": {"Person": ["Id", "Email"]},
-     "rows": {"Person": [[1, "john@example.com"],
-                         [2, "bob@example.com"],
-                         [3, "john@example.com"]]}}
-    ''')
-person = pd.DataFrame(table['rows']['Person'],
-                      columns=table['headers']['Person'])
+# import pandas as pd
+# from pandas.testing import assert_frame_equal
+# from pandasql import sqldf
 
 
 # class TestSolution(unittest.TestCase):
 
-#     # BUG: pandasql doesn't support DELETE or UPDATE clauses.
+#     def setUp(self):
+#         self.input = json.loads('''
+#             {"headers": {"Person": ["Id", "Email"]},
+#              "rows": {"Person": [[1, "john@example.com"],
+#                                  [2, "bob@example.com"],
+#                                  [3, "john@example.com"]]}}
+#             ''')
+#         self.expected = json.loads('''
+#             {"headers": ["Id", "Email"],
+#              "values": [[1, "john@example.com"], [2, "bob@example.com"]]}
+#             ''')
+
 #     def test_delete_duplicate_emails(self):
+#         person = pd.DataFrame(
+#             self.input['rows']['Person'],
+#             columns=self.input['headers']['Person'])
+#         expected_df = pd.DataFrame(self.expected['values'],
+#                                    columns=self.expected['headers'])
+
 #         with open(
 #             'src/problems/0196-delete-duplicate-emails.sql'
 #         ) as f:
 #             q = f.read()
 
-#         result = json.loads('''
-#         {"headers": ["Id", "Email"],
-#          "values": [[1, "john@example.com"], [2, "bob@example.com"]]}
-#         ''')
-
-#         result_df = pd.DataFrame(result['values'],
-#                                  columns=result['headers'])
-#         assert_frame_equal(pysqldf(q), result_df)
+#         pysqldf = lambda q: sqldf(q, {'person': person})
+#         assert_frame_equal(pysqldf(q), expected_df)
